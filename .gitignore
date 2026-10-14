@@ -1,6 +1,10 @@
 # 課程題目講義（版權屬於課程）
 15_Final_Project.pdf
 
+# 個人參考用，不放上 GitHub
+檔案結構/
+*.docx
+
 # Office 開檔時產生的暫存檔
 ~$*
 

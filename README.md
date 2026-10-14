@@ -2,6 +2,12 @@
 
 數位積體電路設計期末專題：用 Verilog 設計符合 IEEE 754 的雙精度（64-bit）浮點數乘法器，以 pipeline 架構跑在 2.0 GHz，從 RTL 一路做到 APR，並通過 Calibre DRC / LVS。
 
+<p align="center">
+  <img src="images/layout_ir_drop.png" width="520" alt="APR 後的 layout 與 IR drop 分布">
+  <br>
+  <sub>APR 後的 layout 與 IR drop 分布（Cadence Innovus）</sub>
+</p>
+
 ## 規格
 
 | 訊號 | 方向 | 說明 |
@@ -58,14 +64,14 @@ Testbench 用 `$bitstoreal` 把 A、B 轉成 real，由模擬器算出 `A * B`�
 | Testbench | 階段 | 讀入的設計 |
 | --- | --- | --- |
 | `TEST_CHIP.v` | RTL 模擬 | `CHIP.v` |
-| `TEST_CHIP_gate` | 合成後 gate-level 模擬 | `CHIP_syn.v`、`CHIP.sdf` |
+| `TEST_CHIP_gate.v` | 合成後 gate-level 模擬 | `CHIP_syn.v`、`CHIP.sdf` |
 | `TEST_CHIP_post.v` | APR 後 post-layout 模擬 | `../Innovus/CHIP.v`、`../Innovus/CHIP.sdf` |
 
 Gate-level 和 post-layout 的 testbench 會另外輸出 toggle count（`CHIP.tcf`），給功耗分析用。
 
 ## 結果
 
-數據取自期末報告。
+數據取自[期末報告](614410105%20劉宇軒%20Final%20Project%20Report.pdf)。
 
 | 項目 | 數值 |
 | --- | --- |
@@ -79,32 +85,56 @@ Gate-level 和 post-layout 的 testbench 會另外輸出 toggle count（`CHIP.tc
 | IR drop | 最大約 3.71 mV |
 | DRC / LVS | 皆通過 |
 
+<details>
+<summary>工具報告截圖（timing、IR drop、LVS）</summary>
+
+合成後 timing report（slack 4 ps）：
+
+<img src="images/syn_timing.png" width="600" alt="合成後 timing report">
+
+Post-route setup check：
+
+<img src="images/postroute_setup.png" width="520" alt="Post-route setup check">
+
+Post-route hold check：
+
+<img src="images/postroute_hold.png" width="520" alt="Post-route hold check">
+
+IR drop 分析（最大約 3.71 mV）：
+
+<img src="images/ir_drop_result.png" width="420" alt="IR drop 分析結果">
+
+LVS 比對結果：
+
+<img src="images/lvs_result.png" width="600" alt="LVS 比對結果">
+
+</details>
+
 ## 設計流程
 
-製程為 N16ADFP（16 nm），在工作站上完成。`檔案結構/` 是工作站上各資料夾的 `ls` 截圖：
+製程為 N16ADFP（16 nm），在工作站上完成，各階段使用的工具：
 
-| 資料夾 | 內容 | 工具 |
-| --- | --- | --- |
-| `RTL/` | RTL 模擬 | NC-Verilog、Verdi |
-| `Synthesis/` | 邏輯合成 | Cadence Genus |
-| `Netlist/` | Gate-level 與 post-layout 模擬 | NC-Verilog |
-| `Innovus/` | APR，功耗與 IR drop 分析 | Cadence Innovus、Voltus |
-| `drc/`、`lvs/` | DRC、LVS 檢查 | Calibre |
-| `add_dummy/` | 加入 dummy fill | — |
-| `virtuoso/` | 檢視 layout | Cadence Virtuoso |
+| 階段 | 工具 |
+| --- | --- |
+| RTL 模擬 | NC-Verilog、Verdi |
+| 邏輯合成 | Cadence Genus |
+| Gate-level 與 post-layout 模擬 | NC-Verilog |
+| APR，功耗與 IR drop 分析 | Cadence Innovus、Voltus |
+| DRC、LVS 檢查 | Calibre |
+| 加入 dummy fill | — |
+| 檢視 layout | Cadence Virtuoso |
 
 ## 檔案
 
 | 檔案 | 說明 |
 | --- | --- |
 | `CHIP.v` | RTL 設計 |
-| `TEST_CHIP.v`、`TEST_CHIP_gate`、`TEST_CHIP_post.v` | 三個階段的 testbench |
-| `614410105 劉宇軒 Final Project Report.pdf`（`.docx`） | 期末報告 |
-| `final project 報告資料.docx` | 報告用的截圖（timing、IR drop、chip size、DRC、LVS） |
-| `檔案結構/` | 工作站資料夾的 `ls` 截圖 |
+| `TEST_CHIP.v`、`TEST_CHIP_gate.v`、`TEST_CHIP_post.v` | 三個階段的 testbench |
+| `614410105 劉宇軒 Final Project Report.pdf` | 期末報告 |
+| `images/` | README 用的 layout 與工具報告截圖 |
 
 ## 注意事項
 
 - 課程的題目講義版權屬於課程，所以沒有放進 repo。
-- 合成與 APR 產生的檔案（netlist、SDF、GDS 等）和製程 library 都留在工作站上，沒有放進 repo，所以 gate-level 和 post-layout 的 testbench 無法單靠這個 repo 執行。`檔案結構/` 裡兩個 `(APR產生).txt` 是空白檔，只用來標示 `CHIP.gds`、`CHIP_LVS.v` 的位置。
+- 合成與 APR 產生的檔案（netlist、SDF、GDS 等）和製程 library 都留在工作站上，沒有放進 repo，所以 gate-level 和 post-layout 的 testbench 無法單靠這個 repo 執行。
 - Testbench 用到 `$fsdbDumpfile`（Verdi）和 `$toggle_count`（Cadence 模擬器）。改用其他模擬器時，要先把這幾行拿掉。
